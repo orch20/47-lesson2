@@ -8,6 +8,10 @@ export class Gallery extends Component {
     query: '',
     page: 1,
     images: [],
+    isVisible: false,
+    isLoading: false,
+    isEmpty: false,
+    error: null,
   };
 
   componentDidUpdate(_, prevState) {
@@ -17,15 +21,22 @@ export class Gallery extends Component {
     }
   }
   getImages = async (query, page) => {
-    console.log(query, page);
+    this.setState({isLoading: true})
     try {
-      const { photos } = await ImageService.getImages(query, page)
+      const { photos, total_results, per_page, page: currentPage } = await ImageService.getImages(query, page)
+      if (photos.length === 0) {
+        this.setState({isEmpty: true})
+      }
       this.setState(prevState => ({
-        images: [...prevState.images, ...photos]
+        images: [...prevState.images, ...photos],
+        isVisible: currentPage < Math.ceil(total_results/per_page),
       }))
-     
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      this.setState({error: error.message})
+    }
+    finally {
+      this.setState({isLoading:false})
     }
   };
   onHandleSubmit = (value) => {
@@ -36,17 +47,29 @@ export class Gallery extends Component {
       query: value,
       page: 1,
       images: [],
+      isVisible: false,
+      isEmpty: false,
+      error: null,
     }); 
   }
   
+  ohHandleLoadMore = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }))
+
+  }
+
   render() {
     console.log(this.state.images)
-    const { images } = this.state;
+    const { images, isVisible, isLoading, isEmpty, error } = this.state;
     return (
       <>
-        {/* <Text textAlign="center">Sorry. There are no images ... 😭</Text> */}
         <SearchForm onSubmit={this.onHandleSubmit} />
+        {isEmpty && <Text textAlign="center">Sorry. There are no images ... 😭</Text>}
         <Grid>{images.length > 0 && images.map(({ id, avg_color, alt, src: { large } }) => (<GridItem key={id}><CardItem color={avg_color}><img src={large} alt={alt} /></CardItem></GridItem>))}</Grid>
+        {isVisible && <Button onClick={this.ohHandleLoadMore} disabled={isLoading} >{ isLoading ? "Loading..." : "Load more"}</Button>}
+        {error && <Text textAlign="center">Sorry. {error} 😭</Text>}
       </>
     );
   }
