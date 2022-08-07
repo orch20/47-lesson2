@@ -5,7 +5,7 @@ import { Button, SearchForm, Grid, GridItem, Text, CardItem } from 'components';
 
 export class Gallery extends Component {
   state = {
-    query: 'cat',
+    query: '',
     page: 1,
     images: [],
   };
@@ -19,12 +19,15 @@ export class Gallery extends Component {
   getImages = async (query, page) => {
     console.log(query, page);
   };
-
+  onHandleSubmit = (value) => {
+  console.log('value', value)
+  }
+  
   render() {
     return (
       <>
         {/* <Text textAlign="center">Sorry. There are no images ... 😭</Text> */}
-        <SearchForm />
+        <SearchForm onSubmit={this.onHandleSubmit}/>
       </>
     );
   }
